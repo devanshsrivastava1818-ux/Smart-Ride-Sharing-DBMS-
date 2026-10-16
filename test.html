@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment - Smart Ride-Sharing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --secondary-blue: #3b82f6;
+            --light-blue: #dbeafe;
+            --primary-green: #10b981;
+            --secondary-green: #34d399;
+            --dark-gray: #374151;
+            --medium-gray: #6b7280;
+            --light-gray: #f3f4f6;
+            --white: #ffffff;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+            --gradient: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            background: var(--white);
+            color: var(--primary-blue);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Progress Steps */
+        .progress-container {
+            margin: 30px auto;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 4px;
+            width: 100%;
+            background-color: var(--light-gray);
+            z-index: 1;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 4px;
+            width: 66%;
+            background: var(--gradient);
+            z-index: 2;
+            transition: var(--transition);
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 3px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--medium-gray);
+            position: relative;
+            z-index: 3;
+            transition: var(--transition);
+        }
+
+        .step.active {
+            border-color: var(--primary-blue);
+            background: var(--primary-blue);
+            color: var(--white);
+            box-shadow: 0 0 0 5px var(--light-blue);
+        }
+
+        .step.completed {
+            border-color: var(--primary-green);
+            background: var(--primary-green);
+            color: var(--white);
+        }
+
+        .step-label {
+            position: absolute;
+            top: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.85rem;
+            color: var(--medium-gray);
+        }
+
+        .step.active .step-label {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px 0;
+            display: flex;
+            gap: 30px;
+        }
+
+        .payment-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-size: 1.2rem;
+        }
+
+        /* Payment Methods */
+        .payment-methods {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .payment-method {
+            flex: 1;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .payment-method:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-3px);
+        }
+
+        .payment-method.active {
+            border-color: var(--primary-blue);
+            background: var(--light-blue);
+        }
+
+        .method-icon {
+            font-size: 1.8rem;
+            color: var(--medium-gray);
+        }
+
+        .payment-method.active .method-icon {
+            color: var(--primary-blue);
+        }
+
+        .method-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--medium-gray);
+            transition: var(--transition);
+        }
+
+        .input-with-icon input, 
+        .input-with-icon select {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: var(--white);
+        }
+
+        .input-with-icon input:focus, 
+        .input-with-icon select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .input-with-icon input:focus + i {
+            color: var(--primary-blue);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Credit Card Styling */
+        .credit-card {
+            background: var(--gradient);
+            border-radius: 15px;
+            padding: 25px;
+            color: var(--white);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .credit-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .credit-card::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            right: -20%;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .card-chip {
+            width: 50px;
+            height: 40px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border-radius: 8px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-number {
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-details {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-holder, .card-expiry {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-label {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .card-value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Summary Section */
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-blue);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: var(--white);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        /* Security Badge */
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark-gray);
+            color: var(--white);
+            padding: 30px 0;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--white);
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .footer-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--secondary-green);
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover::after {
+            width: 100%;
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary-green);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .payment-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .logo-text {
+                font-size: 1.3rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-bus"></i>
+                    </div>
+                    <div class="logo-text">Smart Ride-Sharing</div>
+                </div>
+                <div class="tagline">Safe. Affordable. Smart travel for students.</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Progress Steps -->
+    <div class="container">
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+            <div class="step completed">
+                <span>1</span>
+                <div class="step-label">Ride Details</div>
+            </div>
+            <div class="step completed">
+                <span>2</span>
+                <div class="step-label">Confirmation</div>
+            </div>
+            <div class="step active">
+                <span>3</span>
+                <div class="step-label">Payment</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="payment-container">
+            <!-- Payment Method Section -->
+            <div class="card fade-in-up">
+                <div class="card-header">
+                    <h2 class="card-title">Payment Method</h2>
+                    <div class="card-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                </div>
+                
+                <div class="payment-methods">
+                    <div class="payment-method active">
+                        <i class="fas fa-credit-card method-icon"></i>
+                        <span class="method-name">Credit Card</span>
+                    </div>
+                    <div class="payment-method">
+                        <i class="fab fa-paypal method-icon"></i>
+                        <span class="method-name">PayPal</span>
+                    </div>
+                    <div class="payment-method">
+                        <i class="fas fa-mobile-alt method-icon"></i>
+                        <span class="method-name">Digital Wallet</span>
+                    </div>
+                </div>
+                
+                <!-- Credit Card Preview -->
+                <div class="credit-card">
+                    <div class="card-chip"></div>
+                    <div class="card-number">**** **** **** 1234</div>
+                    <div class="card-details">
+                        <div class="card-holder">
+                            <div class="card-label">CARD HOLDER</div>
+                            <div class="card-value">John Doe</div>
+                        </div>
+                        <div class="card-expiry">
+                            <div class="card-label">EXPIRES</div>
+                            <div class="card-value">12/25</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Form -->
+                <form id="payment-form">
+                    <div class="form-group">
+                        <label for="card-number">Card Number</label>
+                        <div class="input-with-icon">
+                            <i class="far fa-credit-card"></i>
+                            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="card-holder">Card Holder Name</label>
+                        <div class="input-with-icon">
+                            <i class="far fa-user"></i>
+                            <input type="text" id="card-holder" placeholder="John Doe">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expiry-date">Expiry Date</label>
+                            <div class="input-with-icon">
+                                <i class="far fa-calendar-alt"></i>
+                                <input type="text" id="expiry-date" placeholder="MM/YY" maxlength="5">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cvv">CVV</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-lock"></i>
+                                <input type="text" id="cvv" placeholder="123" maxlength="3">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="security-badge">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Your payment information is secure and encrypted</span>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Order Summary Section -->
+            <div class="card fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <h2 class="card-title">Trip Summary</h2>
+                    <div class="card-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">From</div>
+                        <div class="summary-value">123 Main Street</div>
+                    </div>
+                    <div>
+                        <i class="fas fa-map-marker-alt" style="color: var(--primary-blue);"></i>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">To</div>
+                        <div class="summary-value">Springfield High School</div>
+                    </div>
+                    <div>
+                        <i class="fas fa-map-marker-alt" style="color: var(--primary-green);"></i>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">Date & Time</div>
+                        <div class="summary-value">Mon, Oct 16, 2023 • 7:30 AM</div>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">Passengers</div>
+                        <div class="summary-value">2 Students</div>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">Distance</div>
+                        <div class="summary-value">5.2 miles</div>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">Base Fare</div>
+                        <div class="summary-value">$8.50</div>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">Service Fee</div>
+                        <div class="summary-value">$1.50</div>
+                    </div>
+                </div>
+                
+                <div class="summary-item">
+                    <div>
+                        <div class="summary-label">Student Discount</div>
+                        <div class="summary-value" style="color: var(--primary-green);">-$2.00</div>
+                    </div>
+                </div>
+                
+                <div class="summary-item summary-total">
+                    <div>Total Amount</div>
+                    <div>$8.00</div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back
+                    </button>
+                    <button class="btn btn-primary" id="pay-now-btn">
+                        <i class="fas fa-lock"></i>
+                        Pay Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2023 Smart Ride-Sharing System for School Students. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Contact Us</a>
+                    <a href="#">About</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Format card number input
+        document.getElementById('card-number').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ');
+            if (formattedValue) {
+                e.target.value = formattedValue;
+            }
+        });
+
+        // Format expiry date input
+        document.getElementById('expiry-date').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            if (value.length >= 2) {
+                e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+        });
+
+        // Payment method selection
+        const paymentMethods = document.querySelectorAll('.payment-method');
+        paymentMethods.forEach(method => {
+            method.addEventListener('click', function() {
+                paymentMethods.forEach(m => m.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Pay Now button animation
+        document.getElementById('pay-now-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            // Add loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+            
+            // Simulate payment processing
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> Payment Successful!';
+                btn.style.background = 'var(--primary-green)';
+                
+                // Redirect after success
+                setTimeout(() => {
+                    alert('Payment processed successfully! Redirecting to confirmation page...');
+                    // In a real app, you would redirect to a confirmation page
+                    // window.location.href = '/confirmation';
+                }, 1500);
+            }, 2000);
+        });
+
+        // Add animation to elements when they come into view
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe cards for animation
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.opacity = 0;
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
